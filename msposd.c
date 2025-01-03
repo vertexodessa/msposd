@@ -779,6 +779,9 @@ static void serial_read_cb(struct bufferevent *bev, void *arg)
 			stat_MSPBytesSent=0;
 			stat_MSP_draw_complete_count=0;
 			stat_UDP_MSPframes=0;
+			printf("sending data to UDP\n");
+			sendto(out_sock, data, packet_len, 0, (struct sockaddr *)&sin_out, sizeof(sin_out));
+
     	}
 		stat_pckts++;
 		stat_bytes+=packet_len;
@@ -791,24 +794,6 @@ static void serial_read_cb(struct bufferevent *bev, void *arg)
 				msp_process_data(rx_msp_state, data[i]);
 			
 			
-			//continue;
-		}else{
-			if (!version_shown && ttl_packets%10==3)//If garbage only, give some feedback do diagnose
-				printf("Packets:%d  Bytes:%d\n",ttl_packets,ttl_bytes);
-
-			if (aggregate==0){
-				if (sendto(out_sock, data, packet_len, 0,
-				(struct sockaddr *)&sin_out,
-				sizeof(sin_out)) == -1) {
-						perror("sendto()");
-						//event_base_loopbreak(base);
-						return false;
-				}
-			}
-
-			//Let's try to parse the stream	
-			if (aggregate>0 || rc_channel_mon_enabled)//if no RC channel control needed, only forward the data
-				process_mavlink(data,packet_len, arg);//Let's try to parse the stream		
 		}
 
 		evbuffer_drain(input, packet_len);		
